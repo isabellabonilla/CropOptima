@@ -50,7 +50,7 @@ class Graph { // loose references: graph terminology and implementation, lecture
         this->numCrops = crops.size();
 
         // initialize adjacency matrix with the correct size and compatability values (edge weights) to 0 
-        adjMatrix = vector<vector<int>>(numCrops, vector<int>(numCrops, 0)); 
+        adjMatrix = vector<vector<int>>(numCrops, vector<int>(numCrops, -1)); 
     }
 
     void populate() { // iterate through the entire matrix generating the compatibility scores between each crop (edge weights)
@@ -69,7 +69,7 @@ class Graph { // loose references: graph terminology and implementation, lecture
         cout << "       ";
 
         for(int i = 0; i < 10; i++) {
-            cout << crops[i].name << "        ";
+            cout << crops[i].name << "   ";
         }
         cout << endl;
 
