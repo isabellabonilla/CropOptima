@@ -6,7 +6,7 @@
 #include "Graph.h"
 using namespace std;
 
-vector<Crop> readStateCropData(const string& filename, string state) { // read crop data from csv file and create vector of crop objects for the user-specified state
+vector<Crop> readStateCropData(const string& filename, const string& state) { // read crop data from csv file and create vector of crop objects for the user-specified state
     vector<Crop> crops;
 
     ifstream file(filename);
