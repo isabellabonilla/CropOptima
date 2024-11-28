@@ -4,7 +4,7 @@
 #include <vector>
 #include <unordered_map>
 #include <string>
-#include "Utility.h"
+#include <iostream>
 using namespace std;
 
 
@@ -13,7 +13,8 @@ struct Crop {
     int inputN, outputN;
     int inputP, outputP;
     int inputK, outputK;
-    Crop(string name, int inputN, int outputN, int inputP, int outputP, int inputK, int ouputK) {
+
+    Crop(string name, int inputN, int outputN, int inputP, int outputP, int inputK, int outputK) {
         this->name = name;
         this->inputN = inputN;
         this->outputN = outputN;
@@ -31,7 +32,6 @@ class Graph { // loose references: graph terminology and implementation, lecture
     int numCrops; // number of vertices in graph
 
     vector<Crop> crops; // holds all of the crop objects
-    unordered_map<string, int> mapper; // map to store crop names and their associated index in adjacency matrix
     vector<vector<int>> adjMatrix; // adjacency matrix that holds the compatibility values between crops
 
     int getCompatibility(Crop& crop1, Crop& crop2) { // measures difference in crop2's nutrient requirements and crop1's nutrient output
@@ -51,37 +51,38 @@ class Graph { // loose references: graph terminology and implementation, lecture
 
         // initialize adjacency matrix with the correct size and compatability values (edge weights) to 0 
         adjMatrix = vector<vector<int>>(numCrops, vector<int>(numCrops, 0)); 
+    }
 
-        for(int i = 0; i < crops.size(); i++) { // directly populating mapper with crop names and their associated index in the adjacency matrix
-            mapper[crops[i].name] = i;
+    void populate() { // iterate through the entire matrix generating the compatibility scores between each crop (edge weights)
+        for(int i = 0; i < numCrops; i++) {
+            for(int j = 0; j < numCrops; j++) {
+                if(i != j) { // do not add a compatibility score for a crop to itself
+                    int weight = getCompatibility(crops[i], crops[j]);
+                    adjMatrix[i][j] = weight;
+                }
+            }
         }
     }
 
-    // TENTATIVE BECAUSE IM EDITTING THE GRAPH CONSTRUCTOR
-    // void addCrop(Crop& crop) {
-    //     mapper[crop.name] = numCrops; // map the new crop name to the next index in the adjacency mmatrix
-    //     numCrops++;
-    // }
+    void printMatrix() {
+        cout << "Adjacency Matrix: Compatibility Scores" << endl;
+        cout << "       ";
 
-    // void addEdge(string& from, string& to, int compatibility) {
-    //     if(mapper.find(from) == mapper.end()) { 
-    //         mapper[from] = numCrops++; // assign an index to the new crop
-    //     }
-    //     if(mapper.find(to) == mapper.end()) {
-    //         mapper[to] = numCrops++; // assign an index to the new crop
-    //     }
+        for(int i = 0; i < 10; i++) {
+            cout << crops[i].name << "        ";
+        }
+        cout << endl;
 
-    //     adjMatrix[mapper[from]][mapper[to]] = compatibility; // add a compatbility value between crops in adjacency matrix
-    // }
+        for(int i = 0; i < 10; i++) {
+            cout << crops[i].name << "          ";
 
-    // void populateGraph() {
-
-    // }
-
-
-
-
-
+            for(int j = 0; j < 10; j++) {
+                cout << adjMatrix[i][j] << "          ";
+            }
+            cout << endl;
+        }
+        cout << endl;
+    }
 };
 
 #endif                
