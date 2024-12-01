@@ -9,7 +9,7 @@ int main() {
     string state = "Alabama";
 
     //loading crop data based on the specified state
-    vector<Crop> crops = readStateCropData("dataset/crop_nutrient_dataset.csv", state);
+    vector<Crop> crops = readStateCropData("../CropOptimaProject/dataset/cropNutrientDataset.csv", state);
 
     vector<Crop> newCrops;
 
