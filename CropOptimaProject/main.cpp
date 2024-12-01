@@ -27,8 +27,8 @@ int main() {
     cropGraph.printMatrix();
 
     //get user input for the starting and ending crop for the rotation
-    string startCrop = "Blue Java Banana";
-    string endCrop = "Longan";
+    string startCrop = "Breadfruit Tree";
+    string endCrop = "Ambrosia";
 
     //running the algorithms
     cropGraph.bellmanFord(startCrop, endCrop);
