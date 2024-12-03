@@ -1,5 +1,6 @@
 // Main program logic
 #include <iostream>
+#include <chrono>
 #include "Graph.h"
 #include "Utility.h"
 using namespace std;
@@ -58,14 +59,27 @@ int main() {
     cout << "\n";
 
     //running the algorithms
-    // TODO: add execution times and nutrient leftovers
-    cout << "Bellman Ford Sequence:" << endl;
-    cropGraph.bellmanFord(startCrop, endCrop);
-    cout << "Execution Time: " << endl;
+    // TODO: add nutrient leftovers
 
+    // Using Chrono in C++ reference from Geeks for Geeks https://www.geeksforgeeks.org/chrono-in-c/
+    // ********************************************************************************************************//
+    cout << "Bellman Ford Sequence:" << endl;
+    auto bellmanStart = chrono::high_resolution_clock::now();
+    cropGraph.bellmanFord(startCrop, endCrop);
+    auto bellmanEnd = chrono::high_resolution_clock::now();
+
+    std::chrono::duration<double> bellmanDuration = bellmanEnd - bellmanStart; // calculate and print duration for BF algo
+    cout << "Execution Time: " << bellmanDuration.count() << endl;
+
+    // ********************************************************************************************************//
     cout << "\nFloyd Warshall Sequence: " << endl;
+    auto floydStart = chrono::high_resolution_clock::now();
     cropGraph.floydWarshall(startCrop, endCrop);
-    cout << "Execution Time: " << endl;
+    auto floydEnd = chrono::high_resolution_clock::now();
+
+    chrono::duration<double> floydDuration = floydEnd - floydStart; // calculate and print duration for FW algo
+    cout << "Execution Time: " << floydDuration.count() << endl;
+
     cout << "\n";
     cout << "=====================================================================================" << endl;
 
