@@ -17,6 +17,7 @@ vector<Crop> readStateCropData(const string& filename, const string& state) { //
 
     string line;
     getline(file, line); // skip header line of csv
+    bool stateFound;
 
     while(getline(file, line)) { // read each crop's data
         stringstream ss(line);
@@ -33,6 +34,7 @@ vector<Crop> readStateCropData(const string& filename, const string& state) { //
 
         if (cropState == state) {
             // convert inputs and outputs to integers
+            stateFound = true;
             int inputN = stoi(strInputN);
             int outputN = stoi(strOutputN);
             int inputP = stoi(strInputP);
@@ -45,7 +47,7 @@ vector<Crop> readStateCropData(const string& filename, const string& state) { //
             crops.push_back(crop); 
         }
 
-        if(cropState != state){ // if the next line has the wrong state, all crops for that state have been collected (csv is in alphabetical order) so break out of the loop
+        if(cropState != state && stateFound){ // if the next line has the wrong state, all crops for that state have been collected (csv is in alphabetical order) so break out of the loop
             break;
         }
     }
