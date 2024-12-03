@@ -49,7 +49,7 @@ int main() {
     for (const auto& state : states) { // for every state (in alphabetical order), resize the random crops it can have from 350-450 per state
         vector<string> stateCrops = allCrops;
         shuffle(stateCrops.begin(), stateCrops.end(), gen);
-        stateCrops.resize(400);
+        stateCrops.resize(300);
 
         for (const auto& crop : stateCrops) { // for every crop, writes a random I/O for Nitrogen, Phosphorus, and Potassium
             outFile << state << "," // COMMA SEPARATED VALUES (CSV) we will read from
@@ -67,7 +67,7 @@ int main() {
     // it created an executable 'cropDataGenerator' file, ran it with ./cropDataGenerator, it created the data set cropNutrientDataset.csv!
 
     outFile.close();
-   cout << "Dataset created successfully with 20,000 rows (50 states x 400 unique crops), each with 7 additional points of name & nutrient info (140,000 points of data)." << endl;
+   cout << "Dataset created successfully with 15,000 rows (50 states x 300 unique crops), each with 7 additional points of name & nutrient info (105,000 points of data)." << endl;
 
     return 0;
 }
