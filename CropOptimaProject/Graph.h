@@ -93,6 +93,7 @@ public:
         cout << endl;
     }
 
+    // TODO: minimum rotation constraint needs to be larger than 3 crops
     vector<string> bellmanFord(string& startCrop, string& endCrop) { // loose reference: discussion 11 - graph algorithms - slide 29 to 41
         // step 1: initialize map for distances and predecessors
         unordered_map<string, tuple<int, int, int>> dist;
@@ -138,7 +139,26 @@ public:
         }
 
         // step 3: check for negative weights (deficits in nutrient differences)
+        for (int x = 0; x < numCrops; x++) {
+            for (int y = 0; y < numCrops; y++) {
+                tuple<int, int, int> weight = adjMatrix[x][y];
+                if (get<0>(weight) != INT_MAX && get<1>(weight) != INT_MAX && get<2>(weight) != INT_MAX) {
+                    string fromCrop = crops[x].name;
+                    string toCrop = crops[y].name;
 
+                    tuple<int, int, int> distFrom = dist[fromCrop];
+                    tuple<int, int, int> distTo = dist[toCrop];
+
+                    // check if we can still relax an edge after V-1 iterations
+                    if (get<0>(distFrom) + get<0>(weight) < get<0>(distTo) ||
+                        get<1>(distFrom) + get<1>(weight) < get<1>(distTo) ||
+                        get<2>(distFrom) + get<2>(weight) < get<2>(distTo)) {
+                        cout << "Negative weight cycle detected. " << endl;
+                        return {}; // return empty sequence to
+                    }
+                }
+            }
+        }
 
         // step 4: reconstruct path from start crop to end crop
         vector<string> cropSequence;
@@ -183,7 +203,7 @@ public:
     // Geeks for Geeks: Floyd-Warshall Algorithm
     // Michael Sambol (YT Video) "Floyd–Warshall algorithm in 4 minutes" https://www.youtube.com/watch?v=4OQeCuLYj-4
     // modified to support start & end crop
-
+    // TODO: add a min length constraint
     vector<string> floydWarshall(string& startCrop, string& endCrop){
         // initialize the distance matrix with the adj matrix
         vector<vector<tuple<int, int, int>>> dist = adjMatrix;
@@ -255,6 +275,8 @@ public:
             int nextNode = next[current][end];
             if (visitedNodes.count(nextNode) > 0) {
                 cout << "Cycle detected. Finding alternative path." << endl;
+
+
                 break;
             }
 
