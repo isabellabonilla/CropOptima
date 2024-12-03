@@ -11,14 +11,14 @@ int main() {
     //loading crop data based on the specified state
     vector<Crop> crops = readStateCropData("../CropOptimaProject/dataset/cropNutrientDataset.csv", state);
 
-    vector<Crop> newCrops;
+    //vector<Crop> newCrops;
 
-    for(int i = 0; i < 4; i++) {
-        newCrops.push_back(crops[i]);
-    }
+//    for(int i = 0; i < 300; i++) {
+//        newCrops.push_back(crops[i]);
+//    }
 
     // create the graph based on how many crops are in the specified state
-    Graph cropGraph(newCrops);
+    Graph cropGraph(crops);
 
     // populate the graph with the proper compatibility values (edge weights)
     cropGraph.populate();
@@ -27,11 +27,15 @@ int main() {
     cropGraph.printMatrix();
 
     //get user input for the starting and ending crop for the rotation
-    string startCrop = "Breadfruit Tree";
-    string endCrop = "Ambrosia";
+    string startCrop = "Apricot";
+    string endCrop = "Almond";
 
     //running the algorithms
     cropGraph.bellmanFord(startCrop, endCrop);
+    cout << "" << endl;
+    cout << "" << endl;
+    cout << "" << endl;
+    cropGraph.floydWarshall(startCrop, endCrop);
 
     return 0;
 
