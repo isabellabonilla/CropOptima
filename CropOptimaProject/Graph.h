@@ -6,6 +6,7 @@
 #include <string>
 #include <iostream>
 #include <iomanip>
+#include <unordered_set>
 using namespace std;
 
 
@@ -176,6 +177,141 @@ public:
 
         return cropSequence;
     }
+
+    // Floyd Warshall Algorithm
+    // Pseudocode and Basic Implementation Guidance from:
+    // Geeks for Geeks: Floyd-Warshall Algorithm
+    // Michael Sambol (YT Video) "Floyd–Warshall algorithm in 4 minutes" https://www.youtube.com/watch?v=4OQeCuLYj-4
+    // modified to support start & end crop
+
+    vector<string> floydWarshall(string& startCrop, string& endCrop){
+        // initialize the distance matrix with the adj matrix
+        vector<vector<tuple<int, int, int>>> dist = adjMatrix;
+        // use for path reconstruction, keeps track of the 'intermediate vertices' on the shortest path between each pair of vertices.
+        vector<vector<int>> next(numCrops, vector<int>(numCrops, -1));
+        vector<vector<bool>> visited(numCrops, vector<bool>(numCrops, false));
+
+        for (int i = 0; i < numCrops; i++) {  // next^^ initialized with the same dimensions as the distance matrix (n x n where n = number of vertices)
+            for (int j = 0; j < numCrops; j++) {
+                if (i != j && get<0>(dist[i][j]) != INT_MAX) {
+                    next[i][j] = j; // as the algo progresses next[i][j] is updated to store the next vertex on the shortest path from i to j.
+                }
+            }
+        }
+
+        // reference Brilliant.org on Floyd Warshall Algorithm general structure
+
+        for (int k = 0; k < numCrops; k++){ // k is the intermediate crop in the path from i to j
+            for (int i = 0; i < numCrops; i++){ // i is start crop
+                for (int j = 0; j < numCrops; j++){ // j is end crop
+
+                    // first deviation from standard FW algo - accounts for all new nutrient differences (NPK) through individual crop k
+                    int newN = get<0>(dist[i][k]) + get<0>(dist[k][j]);
+                    int newP = get<1>(dist[i][k]) + get<1>(dist[k][j]);
+                    int newK = get<2>(dist[i][k]) + get<2>(dist[k][j]);
+
+                    // calculate the sum of these tuples ^^ for CURRENT path but take absolute values
+                    // refer to line 125 : "... add the absolute values of the tuple to get cumulative distance in terms of nutrient values left"
+                    int currentSum = abs(get<0>(dist[i][j])) + abs(get<1>(dist[i][j])) + abs(get<2>(dist[i][j]));
+                    int newSum = abs(newN) + abs(newP) + abs(newK); // gets sum for the NEW path
+
+                    // reference from Geeks for Geeks "Finding shortest path between any two nodes using Floyd Warshall Algorithm"
+                    if (newSum < currentSum) { // checks if NEW path through k has a smaller sum of nutrient differences
+                        dist[i][j] = make_tuple(newN, newP, newK); // updates the distance matrix
+                        next[i][j] = next[i][k]; // updates next crop in the OPTIMAL path**
+                    }
+
+                }
+            }
+        }
+
+        // reconstructing the path
+        vector<string> cropSequence;
+        int start = -1;
+        int end = -1;
+        // finds indexes where start and end are
+        for (int i = 0; i < numCrops; i++){
+            if (crops[i].name == startCrop){
+                start = i;
+            }
+            if (crops[i].name == endCrop){
+                end = i;
+            }
+        }
+        // referenced lines 153-171 for related if/else structure below
+        if (start == -1 || end == -1 || next[start][end] == -1) { // check if start and end crops even exist
+            cout << "No path exists." << endl;
+            return cropSequence; // Return empty sequence if no path exists
+        }
+
+        // redone section of code to reconstruct optimal path using the next MATRIX, which stores the next crop in the optimal path for each pair of crops
+        unordered_set<int> visitedNodes;
+        int current = start;
+        cropSequence.push_back(startCrop);
+        visitedNodes.insert(current);
+
+        // implemented a check to prevent infinitely running program due to loops/cycles of already visited crops
+        while (current != end){
+            int nextNode = next[current][end];
+            if (visitedNodes.count(nextNode) > 0) {
+                cout << "Cycle detected. Finding alternative path." << endl;
+                break;
+            }
+
+            current = nextNode;
+            cropSequence.push_back(crops[current].name);
+            visitedNodes.insert(current);
+        }
+
+        // after adding those crops stuck in a cycle:
+        // if it hasn't reached the end crop, find the best path through remaining crops
+        if (current != end) {
+            vector<int> remainingCrops;
+            for (int i = 0; i < numCrops; i++) {
+                if (visitedNodes.count(i) == 0) {
+                    remainingCrops.push_back(i);
+                }
+            }
+            // if path reconstruction fails, fallback is a greedy approach
+            // sort remaining (dynamically) OPTIMAL crops based on nutrient waste
+            sort(remainingCrops.begin(), remainingCrops.end(),
+                 [&](int a, int b) {
+                     int sumA = abs(get<0>(dist[current][a])) + abs(get<1>(dist[current][a])) + abs(get<2>(dist[current][a]));
+                     int sumB = abs(get<0>(dist[current][b])) + abs(get<1>(dist[current][b])) + abs(get<2>(dist[current][b]));
+                     return sumA < sumB;
+                 });
+
+            // add remaining crops to sequence
+            for (int crop : remainingCrops) {
+                if (crop != end) {
+                    cropSequence.push_back(crops[crop].name);
+                    current = crop;
+                }
+            }
+
+            // ensure user inputted end crop is the last in sequence
+            if (cropSequence.back() != endCrop) {
+                cropSequence.push_back(endCrop);
+            }
+        }
+
+        // structure to emulate output from bellman ford algorithm
+        cout << "The following crop sequence minimizes overall nutrient waste from " << startCrop << " to " << endCrop << ": " << endl;
+        for (int i = 0; i < cropSequence.size(); i++) {
+            if (i == cropSequence.size() - 1) {
+                cout << cropSequence[i] << endl;
+            } else {
+                cout << cropSequence[i] << " --> ";
+            }
+        }
+        cout << endl;
+
+        tuple<int, int, int> leftovers = dist[start][end];
+        cout << "Nutrients Leftover: " << get<0>(leftovers) << " Nitrogen, " << get<1>(leftovers) << " Phosphorus, " << get<2>(leftovers) << " Potassium" << endl;
+
+        return cropSequence;
+    }
+
 };
 
 #endif
