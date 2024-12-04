@@ -19,12 +19,12 @@ int main() {
     cout << "=====================================================================================" << endl;
     cout << "\n";
     cout << "Welcome to Crop Optima, where the Dirt Detectives are on the case..."
-            "\nLet's turnip the nutrient efficiency of your crop sequence and crack the code to healthier soil!\n" << endl;
+            "\nLet's 'turnip' the nutrient efficiency of your crop sequence and crack the code to healthier soil!\n" << endl;
     cout << "=====================================================================================" << endl;
 
     // get user input for specific state for crop rotation
     string state;
-    cout << "\nDon't be cornfused! Which state are you planting in? ";
+    cout << "\nDon't be 'cornfused'! Which state are you planting in? ";
     getline(cin, state);
 
     //loading crop data based on the specified state
@@ -45,7 +45,9 @@ int main() {
     cropGraph.populate();
 
     //get user input for the starting and ending crop for the rotation
-    string startCrop, endCrop; // pumpkin // tomato
+    string startCrop, endCrop;
+
+    // TODO: check for valid crop name input, if it exists in state
 
     cout << "Let's get this rotation 'growing'! What's your starting crop? ";
     getline(cin, startCrop);
@@ -59,20 +61,20 @@ int main() {
     cout << "\n";
 
     //running the algorithms
-    // TODO: add nutrient leftovers
-
     // Using Chrono in C++ reference from Geeks for Geeks https://www.geeksforgeeks.org/chrono-in-c/
     // ********************************************************************************************************//
-    cout << "Bellman Ford Sequence:" << endl;
+    cout << "Bellman Ford Crop Sequence from " << startCrop << " to " << endCrop << ": " << endl;
     auto bellmanStart = chrono::high_resolution_clock::now();
     cropGraph.bellmanFord(startCrop, endCrop);
     auto bellmanEnd = chrono::high_resolution_clock::now();
 
     std::chrono::duration<double> bellmanDuration = bellmanEnd - bellmanStart; // calculate and print duration for BF algo
     cout << "Execution Time: " << bellmanDuration.count() << endl;
+    cout << "\n";
 
     // ********************************************************************************************************//
-    cout << "\nFloyd Warshall Sequence: " << endl;
+    cout << "=====================================================================================" << endl;
+    cout << "\nFloyd Warshall Crop Sequence from "<< startCrop << " to " << endCrop << ": " << endl;
     auto floydStart = chrono::high_resolution_clock::now();
     cropGraph.floydWarshall(startCrop, endCrop);
     auto floydEnd = chrono::high_resolution_clock::now();
@@ -82,7 +84,7 @@ int main() {
 
     cout << "\n";
     cout << "=====================================================================================" << endl;
-
+    cout << "\n";
     cout << "Thanks for using Crop Optima! May your harvests be plentiful and your weeds be few!" << endl;
 
     return 0;
