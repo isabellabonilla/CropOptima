@@ -93,7 +93,6 @@ public:
         cout << endl;
     }
 
-    // TODO: minimum rotation constraint needs to be larger than 3 crops
     vector<string> bellmanFord(string& startCrop, string& endCrop) { // loose reference: discussion 11 - graph algorithms - slide 29 to 41
         // step 1: initialize map for distances and predecessors
         unordered_map<string, tuple<int, int, int>> dist;
@@ -105,6 +104,13 @@ public:
         }
 
         dist[startCrop] = make_tuple(0, 0, 0); // set starting crop's distance from source to 0 (starting crop is the source)
+
+        // track visited crops and path length
+        // path length must be less than or equal to the number of crops and greater than 3 for user readability
+        unordered_map<string, int> pathLength;
+        for(auto& crop: crops) {
+            pathLength[crop.name] = 0;
+        }
 
         // step 2: relax edges repeatedly
         for(int i = 0; i < numCrops - 1; i++) {
@@ -138,34 +144,21 @@ public:
             }
         }
 
-        // step 3: check for negative weights (deficits in nutrient differences)
-        for (int x = 0; x < numCrops; x++) {
-            for (int y = 0; y < numCrops; y++) {
-                tuple<int, int, int> weight = adjMatrix[x][y];
-                if (get<0>(weight) != INT_MAX && get<1>(weight) != INT_MAX && get<2>(weight) != INT_MAX) {
-                    string fromCrop = crops[x].name;
-                    string toCrop = crops[y].name;
-
-                    tuple<int, int, int> distFrom = dist[fromCrop];
-                    tuple<int, int, int> distTo = dist[toCrop];
-
-                    // check if we can still relax an edge after V-1 iterations
-                    if (get<0>(distFrom) + get<0>(weight) < get<0>(distTo) ||
-                        get<1>(distFrom) + get<1>(weight) < get<1>(distTo) ||
-                        get<2>(distFrom) + get<2>(weight) < get<2>(distTo)) {
-                        cout << "Negative weight cycle detected. " << endl;
-                        return {}; // return empty sequence to
-                    }
-                }
-            }
-        }
-
         // step 4: reconstruct path from start crop to end crop
         vector<string> cropSequence;
+        unordered_set<string> visited; // track visited crops to detect cycles
         string currCrop = endCrop;
+        int maxPathLength = numCrops; // max sequence length
 
         // stop backtracking once you reach a crop with no predecessor (could mean the start crop is reached or there is no path)
         while(currCrop != "" && currCrop != startCrop) {
+            if (visited.count(currCrop)) { // detect cycle
+                cout << "Cycle detected. No valid sequence exists." << endl;
+                cout <<"\n";
+                cropSequence = {};
+                break;
+            }
+            visited.insert(currCrop);
             cropSequence.push_back(currCrop); // add the current crop to the sequence
             currCrop = predecessor[currCrop]; // current crop is now the predecessor
         }
@@ -174,26 +167,19 @@ public:
         if(currCrop == startCrop) {
             cropSequence.push_back(startCrop); // add start crop to the sequence
             reverse(cropSequence.begin(), cropSequence.end()); // reference for reversing a vector: https://www.geeksforgeeks.org/how-to-reverse-a-vector-using-stl-in-c/
-        }
-        else { // if there is no path between the end and start crop
-            cropSequence.erase(cropSequence.begin(), cropSequence.end());
-            cout << "No path exists." << endl;
-            cropSequence = {};
-        }
 
-        cout << "The following crop sequence minimizes overall nutrient waste from " << startCrop << " to " << endCrop << ": " << endl;
-        for(int i = 0; i < cropSequence.size(); i++) { // printing out the sequence (currently for debugging purposes)
-            if(i == cropSequence.size() -1) {
-                cout << cropSequence[i] << endl;
+            for(int i = 0; i < cropSequence.size(); i++) { // printing out the sequence (currently for debugging purposes)
+                if(i == cropSequence.size() -1) {
+                    cout << cropSequence[i] << endl;
+                }
+                else {
+                    cout << cropSequence[i] << " --> ";
+                }
             }
-            else {
-                cout << cropSequence[i] << " --> ";
-            }
+            cout << endl;
+            tuple<int, int, int> leftovers = dist[endCrop];
+            cout << "Nutrients Leftover: " << get<0>(leftovers) << " Nitrogen, " << get<1>(leftovers) << " Phosphorus, " << get<2>(leftovers) << " Potassium" << endl;
         }
-        cout << endl;
-
-        tuple<int, int, int> leftovers = dist[endCrop]; // the leftover nutrients are the distance value of the end crop to the start crop
-        cout << "Nutrients Leftover: " << get<0>(leftovers) << " Nitrogen, " << get<1>(leftovers) << " Phosphorus, " << get<2>(leftovers) << " Potassium" << endl;
 
         return cropSequence;
     }
@@ -318,7 +304,6 @@ public:
         }
 
         // structure to emulate output from bellman ford algorithm
-        cout << "The following crop sequence minimizes overall nutrient waste from " << startCrop << " to " << endCrop << ": " << endl;
         for (int i = 0; i < cropSequence.size(); i++) {
             if (i == cropSequence.size() - 1) {
                 cout << cropSequence[i] << endl;
@@ -327,7 +312,6 @@ public:
             }
         }
         cout << endl;
-
         tuple<int, int, int> leftovers = dist[start][end];
         cout << "Nutrients Leftover: " << get<0>(leftovers) << " Nitrogen, " << get<1>(leftovers) << " Phosphorus, " << get<2>(leftovers) << " Potassium" << endl;
 
