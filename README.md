@@ -19,14 +19,14 @@ Ensure you have the following:
 
 Building and Running the Program
 Step 1: Clone the Repository
-git clone https://github.com/your-repo-name/crop-optima.git
-cd crop-optima
+- git clone https://github.com/your-repo-name/crop-optima.git
+- cd crop-optima
 Step 2: Compile the Code
-Run the following command to compile the program:
-g++ -std=c++11 main.cpp Graph.cpp Utility.cpp -o crop_optima
+- Run the following command to compile the program:
+- g++ -std=c++11 main.cpp Graph.cpp Utility.cpp -o crop_optima
 Step 3: Run the Program
-Execute the program using:
-./crop_optima
+- Execute the program using:
+- ./crop_optima
 
 How to Use
 1. Launch the Program: Follow the welcome prompts to get started.
