@@ -30,12 +30,13 @@ int main() {
     //loading crop data based on the specified state
     vector<Crop> crops = readStateCropData("../CropOptimaProject/dataset/cropNutrientDataset.csv", state);
 
+//    string newState;
     while(crops.empty()) {
-        string newState;
         cout << "Oops! Looks like we can't find " << state << " in the United States." << endl;
         cout << "Try a different state: ";
-        getline(cin, newState);
-        crops = readStateCropData("../CropOptimaProject/dataset/cropNutrientDataset.csv", newState);
+        getline(cin, state);
+        crops = readStateCropData("../CropOptimaProject/dataset/cropNutrientDataset.csv", state);
+
     }
 
     // create the graph based on how many crops are in the specified state
@@ -53,9 +54,22 @@ int main() {
     getline(cin, startCrop);
 
     // search function for valid crops that exist within the graph/state
+    while (!cropGraph.searchCrop(startCrop)){
+        cout << "\n";
+        cout << "Oops Farmer Joe, seems like you can't grow that crop in " << state << endl;
+        cout << "Choose another one you'd like to use!" << endl;
+        getline(cin, startCrop);
+    }
 
     cout << "And for the grand finale, what crop would you like to 'leaf' off with? ";
     getline(cin, endCrop);
+    while (!cropGraph.searchCrop(endCrop)){
+        cout << "\n";
+        cout << "Oops Farmer Joe, seems like you can't grow that crop in " << state << endl;
+        cout << "Choose another one you'd like to use!" << endl;
+        getline(cin, endCrop);
+    }
+
     cout << "\n";
     cout << "=====================================================================================" << endl;
     cout << "\n";
