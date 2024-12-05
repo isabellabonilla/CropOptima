@@ -7,6 +7,8 @@
 #include <iostream>
 #include <iomanip>
 #include <unordered_set>
+#include <queue>
+
 using namespace std;
 
 
@@ -106,10 +108,14 @@ public:
         dist[startCrop] = make_tuple(0, 0, 0); // set starting crop's distance from source to 0 (starting crop is the source)
 
         // track visited crops and path length
-        // path length must be less than or equal to the number of crops and greater than 3 for user readability
         unordered_map<string, int> pathLength;
         for(auto& crop: crops) {
             pathLength[crop.name] = 0;
+        }
+
+        unordered_map<string, int> cropIndex;
+        for (int i = 0; i < crops.size(); i++) { // map crop name to index
+            cropIndex[crops[i].name] = i; // Map crop name to index
         }
 
         // step 2: relax edges repeatedly
@@ -128,7 +134,7 @@ public:
                         int fromTup2 = abs(get<1>(distFrom) + get<1>(weight));
                         int fromTup3 = abs(get<2>(distFrom) + get<2>(weight));
 
-                        tuple<int, int, int> distTo = dist[toCrop];
+                        tuple<int, int, int> distTo = dist[toCrop]; // distance from current crop to the source crop
 
                         // decided to add the absolute values of the tuple to get cumulative distance in terms of nutrient values left
                         // update the distance and predecessor of the visited crop if the distance from the toCrop to the source is smaller from the fromCrop
@@ -144,21 +150,46 @@ public:
             }
         }
 
-        // step 4: reconstruct path from start crop to end crop
+        // step 3: one extra relaxation pass to detect negative cycles
+        for(int i = 0; i < numCrops; i++) {
+            for(int x = 0; x < numCrops; x++) {
+                for(int y = 0; y < numCrops; y++) { // iterating through the matrix is equivalent to iterating through the edges
+                    tuple<int, int, int> weight = adjMatrix[x][y];
+                    if(get<0>(weight) != INT_MAX && get<1>(weight) != INT_MAX && get<2>(weight) != INT_MAX) { // self loops are not valid edges (denoted by INFINITY)
+                        string fromCrop = crops[x].name;
+                        string toCrop = crops[y].name;
+
+                        // accessing the distance tuple values of the fromCrop from the source and adding the nutrient
+                        // differences (edge weight) between the fromCrop and toCrop
+                        tuple<int, int, int> distFrom = dist[fromCrop];
+                        int fromTup1 = abs(get<0>(distFrom) + get<0>(weight));
+                        int fromTup2 = abs(get<1>(distFrom) + get<1>(weight));
+                        int fromTup3 = abs(get<2>(distFrom) + get<2>(weight));
+
+                        tuple<int, int, int> distTo = dist[toCrop];
+
+                        // check if the edge can still be relaxed, if so, there is a negative cycle
+                        if(fromTup1 + fromTup2 + fromTup3 <  abs(get<0>(distTo) + get<1>(distTo) + get<2>(distTo)) && (get<0>(distFrom) != INT_MAX && get<1>(distFrom) != INT_MAX && get<2>(distFrom) != INT_MAX)) {
+                            cout << "Oh no! Negative weight cycle detected. No optimal crop sequence exists :( " << endl;
+                            return {};
+                        }
+                    }
+                }
+            }
+        }
+
+        // step 5: reconstruct path from start crop to end crop
         vector<string> cropSequence;
-        unordered_set<string> visited; // track visited crops to detect cycles
         string currCrop = endCrop;
-        int maxPathLength = numCrops; // max sequence length
+        unordered_set<string> visited;
 
         // stop backtracking once you reach a crop with no predecessor (could mean the start crop is reached or there is no path)
         while(currCrop != "" && currCrop != startCrop) {
-            if (visited.count(currCrop)) { // detect cycle
-                cout << "Cycle detected. No valid sequence exists." << endl;
-                cout <<"\n";
-                cropSequence = {};
-                break;
+            if (visited.find(currCrop) != visited.end()) { // cycle detection
+                cout << "Oh no! Cycle detected during sequence reconstruction. No optimal crop sequence exists :(\n" << endl;
+                return {};
             }
-            visited.insert(currCrop);
+            visited.insert(currCrop); // crop has been visited;
             cropSequence.push_back(currCrop); // add the current crop to the sequence
             currCrop = predecessor[currCrop]; // current crop is now the predecessor
         }
@@ -180,7 +211,10 @@ public:
             tuple<int, int, int> leftovers = dist[endCrop];
             cout << "Nutrients Leftover: " << get<0>(leftovers) << " Nitrogen, " << get<1>(leftovers) << " Phosphorus, " << get<2>(leftovers) << " Potassium" << endl;
         }
-
+        else {
+            cout << "Oh no! No crop sequence exists :(\n" << endl;
+            return {};
+        }
         return cropSequence;
     }
 
@@ -189,7 +223,6 @@ public:
     // Geeks for Geeks: Floyd-Warshall Algorithm
     // Michael Sambol (YT Video) "Floyd–Warshall algorithm in 4 minutes" https://www.youtube.com/watch?v=4OQeCuLYj-4
     // modified to support start & end crop
-    // TODO: add a min length constraint
     vector<string> floydWarshall(string& startCrop, string& endCrop){
         // initialize the distance matrix with the adj matrix
         vector<vector<tuple<int, int, int>>> dist = adjMatrix;
@@ -231,6 +264,14 @@ public:
             }
         }
 
+        // check for negative weight cycles
+        for (int i = 0; i < numCrops; i++) {
+            if (get<0>(dist[i][i]) < 0 || get<1>(dist[i][i]) < 0 || get<2>(dist[i][i]) < 0) {
+                cout << "Oh no! Negative weight cycle detected. No optimal crop sequence exists :(\n" << endl;
+                return {};
+            }
+        }
+
         // reconstructing the path
         vector<string> cropSequence;
         int start = -1;
@@ -246,61 +287,19 @@ public:
         }
         // referenced lines 153-171 for related if/else structure below
         if (start == -1 || end == -1 || next[start][end] == -1) { // check if start and end crops even exist
-            cout << "No path exists." << endl;
+            cout << "Oh no! No crop sequence exists :(\n" << endl;
             return cropSequence; // Return empty sequence if no path exists
         }
 
-        // redone section of code to reconstruct optimal path using the next MATRIX, which stores the next crop in the optimal path for each pair of crops
-        unordered_set<int> visitedNodes;
+        // reconstruct optimal path using the next MATRIX, which stores the next crop in the optimal path for each pair of crops
         int current = start;
         cropSequence.push_back(startCrop);
-        visitedNodes.insert(current);
 
-        // implemented a check to prevent infinitely running program due to loops/cycles of already visited crops
+        // backtracking
         while (current != end){
             int nextNode = next[current][end];
-            if (visitedNodes.count(nextNode) > 0) {
-                cout << "Cycle detected. Finding alternative path." << endl;
-
-
-                break;
-            }
-
             current = nextNode;
             cropSequence.push_back(crops[current].name);
-            visitedNodes.insert(current);
-        }
-
-        // after adding those crops stuck in a cycle:
-        // if it hasn't reached the end crop, find the best path through remaining crops
-        if (current != end) {
-            vector<int> remainingCrops;
-            for (int i = 0; i < numCrops; i++) {
-                if (visitedNodes.count(i) == 0) {
-                    remainingCrops.push_back(i);
-                }
-            }
-            // if path reconstruction fails, fallback is a greedy approach
-            // sort remaining (dynamically) OPTIMAL crops based on nutrient waste
-            sort(remainingCrops.begin(), remainingCrops.end(),
-                 [&](int a, int b) {
-                     int sumA = abs(get<0>(dist[current][a])) + abs(get<1>(dist[current][a])) + abs(get<2>(dist[current][a]));
-                     int sumB = abs(get<0>(dist[current][b])) + abs(get<1>(dist[current][b])) + abs(get<2>(dist[current][b]));
-                     return sumA < sumB;
-                 });
-
-            // add remaining crops to sequence
-            for (int crop : remainingCrops) {
-                if (crop != end) {
-                    cropSequence.push_back(crops[crop].name);
-                    current = crop;
-                }
-            }
-
-            // ensure user inputted end crop is the last in sequence
-            if (cropSequence.back() != endCrop) {
-                cropSequence.push_back(endCrop);
-            }
         }
 
         // structure to emulate output from bellman ford algorithm

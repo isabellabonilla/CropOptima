@@ -69,7 +69,7 @@ int main() {
     auto bellmanEnd = chrono::high_resolution_clock::now();
 
     std::chrono::duration<double> bellmanDuration = bellmanEnd - bellmanStart; // calculate and print duration for BF algo
-    cout << "Execution Time: " << bellmanDuration.count() << endl;
+    cout << "Execution Time: " << bellmanDuration.count() << " seconds" << endl;
     cout << "\n";
 
     // ********************************************************************************************************//
@@ -80,13 +80,23 @@ int main() {
     auto floydEnd = chrono::high_resolution_clock::now();
 
     chrono::duration<double> floydDuration = floydEnd - floydStart; // calculate and print duration for FW algo
-    cout << "Execution Time: " << floydDuration.count() << endl;
+    cout << "Execution Time: " << floydDuration.count() << " seconds" << endl;
 
     cout << "\n";
     cout << "=====================================================================================" << endl;
-    cout << "\n";
-    cout << "Thanks for using Crop Optima! May your harvests be plentiful and your weeds be few!" << endl;
+    cout << "\nThanks for using Crop Optima! May your harvests be plentiful and your weeds be few!" << endl;
+    cout << R"(
+                  _-_                                             _-_
+               /~~   ~~\                                       /~~   ~~\
+            /~~         ~~\           _.-^-._    .--.       /~~         ~~\
+           {               }       .-'   _   '-. |__|      {               }
+            \  _-     -_  /       /     |_|     \|  |       \  _-     -_  /
+                 \\ //           /               \  |            \\ //
+                  | |           /|     _____     |\ |             | |
+                  | |            |    |==|==|    |  |             | |
+                 // \\           |    |==|==| |  |  |            // \\
+~~~^~^~~^~^~~~^~^~~^~^~^~^~^~^~^~~~^~^~~~^~^~~^~^~^~^~^~^~^~^~^~^~~~^~^~~^~^~^~^~^~^~~
+)" << endl;
 
     return 0;
-
 }
