@@ -12,19 +12,18 @@ Features
   - Bellman-Ford
   - Floyd-Warshall
 
-Prerequisites
-Ensure you have the following:
+Prerequisites:
 - C++ Compiler: A compiler supporting C++11 or newer (e.g., GCC, Clang, MSVC).
 - Dataset: The crop nutrient dataset (cropNutrientDataset.csv) placed in the dataset/ directory.
 
 Building and Running the Program
-Step 1: Clone the Repository
+1. Clone the Repository
 - git clone https://github.com/your-repo-name/crop-optima.git
 - cd crop-optima
-Step 2: Compile the Code
+2. Compile the Code
 - Run the following command to compile the program:
 - g++ -std=c++11 main.cpp Graph.cpp Utility.cpp -o crop_optima
-Step 3: Run the Program
+3. Run the Program
 - Execute the program using:
 - ./crop_optima
 
