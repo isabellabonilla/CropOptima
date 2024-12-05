@@ -95,6 +95,15 @@ public:
         cout << endl;
     }
 
+    bool searchCrop(const string& cropName) {
+        for (const auto& crop : crops) {
+            if (crop.name == cropName) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     vector<string> bellmanFord(string& startCrop, string& endCrop) { // loose reference: discussion 11 - graph algorithms - slide 29 to 41
         // step 1: initialize map for distances and predecessors
         unordered_map<string, tuple<int, int, int>> dist;
@@ -127,8 +136,7 @@ public:
                         string fromCrop = crops[x].name;
                         string toCrop = crops[y].name;
 
-                        // accessing the distance tuple values of the fromCrop from the source and adding the nutrient
-                        // differences (edge weight) between the fromCrop and toCrop
+                        // accessing the distance tuple values of the fromCrop from the source and adding the nutrient differences (edge weight) between the fromCrop and toCrop
                         tuple<int, int, int> distFrom = dist[fromCrop];
                         int fromTup1 = abs(get<0>(distFrom) + get<0>(weight));
                         int fromTup2 = abs(get<1>(distFrom) + get<1>(weight));
@@ -183,15 +191,51 @@ public:
         string currCrop = endCrop;
         unordered_set<string> visited;
 
-        // stop backtracking once you reach a crop with no predecessor (could mean the start crop is reached or there is no path)
         while(currCrop != "" && currCrop != startCrop) {
-            if (visited.find(currCrop) != visited.end()) { // cycle detection
-                cout << "Oh no! Cycle detected during sequence reconstruction. No optimal crop sequence exists :(\n" << endl;
-                return {};
+            if (visited.find(currCrop) != visited.end()) { // check if crop has already been visited
+                cout << "Cycle detected. Switching to greedy approach.\n";
+
+                // greedy fallback inspired by floyd warshall greedy fallback
+                vector<string> remainingCrops;
+                for (const auto& crop : crops) { // collect crops that haven't been visited
+                    if (visited.find(crop.name) == visited.end()) {
+                        remainingCrops.push_back(crop.name);
+                    }
+                }
+
+                // sort remaining crops based on nutrient difference
+                sort(remainingCrops.begin(), remainingCrops.end(),
+                     [&](const string& from, const string& to) {
+                         auto distA = dist[from];
+                         auto distB = dist[to];
+                         auto distCurr = dist[currCrop];
+
+                         // calculate nutrient differences for both crops
+                         int diffA = abs(get<0>(distA) - get<0>(distCurr)) +
+                                     abs(get<1>(distA) - get<1>(distCurr)) +
+                                     abs(get<2>(distA) - get<2>(distCurr));
+
+                         int diffB = abs(get<0>(distB) - get<0>(distCurr)) +
+                                     abs(get<1>(distB) - get<1>(distCurr)) +
+                                     abs(get<2>(distB) - get<2>(distCurr));
+
+                         return diffA < diffB; // if from crop has smaller nutrient imbalance than crop to
+                     });
+
+                // add remaining crops to sequence
+                for (const string& crop : remainingCrops) {
+                    if (crop != endCrop) {
+                        cropSequence.push_back(crop);
+                        currCrop = crop;
+                    }
+                }
+
+                break;
             }
-            visited.insert(currCrop); // crop has been visited;
-            cropSequence.push_back(currCrop); // add the current crop to the sequence
-            currCrop = predecessor[currCrop]; // current crop is now the predecessor
+
+            visited.insert(currCrop);
+            cropSequence.push_back(currCrop);
+            currCrop = predecessor[currCrop]; // move to predecessor for next iteration
         }
 
         // if the path is complete and reaches the start crop
@@ -222,7 +266,6 @@ public:
     // Pseudocode and Basic Implementation Guidance from:
     // Geeks for Geeks: Floyd-Warshall Algorithm
     // Michael Sambol (YT Video) "Floyd–Warshall algorithm in 4 minutes" https://www.youtube.com/watch?v=4OQeCuLYj-4
-    // modified to support start & end crop
     vector<string> floydWarshall(string& startCrop, string& endCrop){
         // initialize the distance matrix with the adj matrix
         vector<vector<tuple<int, int, int>>> dist = adjMatrix;
@@ -264,14 +307,6 @@ public:
             }
         }
 
-        // check for negative weight cycles
-        for (int i = 0; i < numCrops; i++) {
-            if (get<0>(dist[i][i]) < 0 || get<1>(dist[i][i]) < 0 || get<2>(dist[i][i]) < 0) {
-                cout << "Oh no! Negative weight cycle detected. No optimal crop sequence exists :(\n" << endl;
-                return {};
-            }
-        }
-
         // reconstructing the path
         vector<string> cropSequence;
         int start = -1;
@@ -287,19 +322,59 @@ public:
         }
         // referenced lines 153-171 for related if/else structure below
         if (start == -1 || end == -1 || next[start][end] == -1) { // check if start and end crops even exist
-            cout << "Oh no! No crop sequence exists :(\n" << endl;
+            cout << "No path exists." << endl;
             return cropSequence; // Return empty sequence if no path exists
         }
 
-        // reconstruct optimal path using the next MATRIX, which stores the next crop in the optimal path for each pair of crops
+        // redone section of code to reconstruct optimal path using the next MATRIX, which stores the next crop in the optimal path for each pair of crops
+        unordered_set<int> visitedNodes;
         int current = start;
         cropSequence.push_back(startCrop);
+        visitedNodes.insert(current);
 
-        // backtracking
+        // implemented a check to prevent infinitely running program due to loops/cycles of already visited crops
         while (current != end){
             int nextNode = next[current][end];
+            if (visitedNodes.count(nextNode) > 0) {
+                cout << "Cycle detected. Switching to greedy approach." << endl;
+                break;
+            }
+
             current = nextNode;
             cropSequence.push_back(crops[current].name);
+            visitedNodes.insert(current);
+        }
+
+        // after adding those crops stuck in a cycle:
+        // if it hasn't reached the end crop, find the best path through remaining crops
+        if (current != end) {
+            vector<int> remainingCrops;
+            for (int i = 0; i < numCrops; i++) {
+                if (visitedNodes.count(i) == 0) {
+                    remainingCrops.push_back(i);
+                }
+            }
+            // if path reconstruction fails, fallback is a greedy approach
+            // sort remaining (dynamically) OPTIMAL crops based on nutrient waste
+            sort(remainingCrops.begin(), remainingCrops.end(),
+                 [&](int a, int b) {
+                     int sumA = abs(get<0>(dist[current][a])) + abs(get<1>(dist[current][a])) + abs(get<2>(dist[current][a]));
+                     int sumB = abs(get<0>(dist[current][b])) + abs(get<1>(dist[current][b])) + abs(get<2>(dist[current][b]));
+                     return sumA < sumB;
+                 });
+
+            // add remaining crops to sequence
+            for (int crop : remainingCrops) {
+                if (crop != end) {
+                    cropSequence.push_back(crops[crop].name);
+                    current = crop;
+                }
+            }
+
+            // ensure user inputted end crop is the last in sequence
+            if (cropSequence.back() != endCrop) {
+                cropSequence.push_back(endCrop);
+            }
         }
 
         // structure to emulate output from bellman ford algorithm
@@ -316,7 +391,6 @@ public:
 
         return cropSequence;
     }
-
 };
 
 #endif
